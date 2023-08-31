@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // AI
 SEXP AI(SEXP Yin, SEXP Xin, SEXP numKin, SEXP Phiin, SEXP Din, SEXP tauin, SEXP fixtauin, SEXP tolin);
 RcppExport SEXP _PQLseq_AI(SEXP YinSEXP, SEXP XinSEXP, SEXP numKinSEXP, SEXP PhiinSEXP, SEXP DinSEXP, SEXP tauinSEXP, SEXP fixtauinSEXP, SEXP tolinSEXP) {
