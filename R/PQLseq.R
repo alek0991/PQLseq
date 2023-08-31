@@ -1,6 +1,6 @@
 pqlseq <- function(RawCountDataSet, Phenotypes, Covariates=NULL, RelatednessMatrix=NULL, LibSize=NULL, 
                    fit.model="BMM", fit.method = "AI.REML", fit.maxiter=500, fit.tol=1e-5, verbose=FALSE, ...) {
-  Start_time = Sys.time()
+  start_time <- Sys.time()
   CountData   <- RawCountDataSet
   numVar <- dim(CountData)[1]
   numIDV <- dim(CountData)[2]
@@ -70,18 +70,19 @@ pqlseq <- function(RawCountDataSet, Phenotypes, Covariates=NULL, RelatednessMatr
     }
     names(tmpRelatednessMatrix) <- paste("kins", 1:length(tmpRelatednessMatrix), sep="")
     model1 <- try(PQLseq.fit(model0, tmpRelatednessMatrix, verbose = verbose, maxiter = fit.maxiter, tol = fit.tol))
-    model1$elapsedtime =  as.numeric(Sys.time() - Start_time)
+    model1$elapsedtime <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
     
-    params_to_display <- c("elapsedtime", "iter", "converged", "intercept", 'se_intercept', "beta", 'se_beta', "pvalue", 'tau1', 'tau2', 'h2', 'sigma2')
+    
+    params_to_display <- c("elapsedtime", "iter", 'maxdiff', "converged", "intercept", 'se_intercept', "beta", 'se_beta', "pvalue", 'tau1', 'tau2', 'h2', 'sigma2')
     max_param_name_length <- max(nchar(params_to_display))
     if(verbose) cat("------------ Summary ------------\n")
-    summary = c()
+    summary <- c()
     for (param_name in params_to_display) {
-      summary = c(summary, model1[param_name])
+      summary <- c(summary, model1[param_name])
       spaces <- paste(rep(" ", max_param_name_length - nchar(param_name)), collapse = "")
       if(verbose) cat(paste0(param_name, ':', spaces), model1[[param_name]], "\n")
     }
-    model1$summary = data.frame(summary)
+    model1$summary <- data.frame(summary)
     return(model1)
   }
   
@@ -95,8 +96,7 @@ pqlseq <- function(RawCountDataSet, Phenotypes, Covariates=NULL, RelatednessMatr
 PQLseq.fit <- function(model0, RelatednessMatrix, method = "REML", method.optim = "AI", maxiter = 500, tol = 1e-5, verbose = FALSE) {
   names(RelatednessMatrix) <- paste("kins", 1:length(RelatednessMatrix), sep="")
   if(method.optim == "AI") {
-    fixtau.new 	<- c(1,0,1)
-    model1 	<- PQLseq.AI(model0, RelatednessMatrix, fixtau = fixtau.new, maxiter = maxiter, tol = tol, verbose = verbose)
+    model1 	<- PQLseq.AI(model0, RelatednessMatrix, maxiter = maxiter, tol = tol, verbose = verbose)
   }else{
     model1 <- NULL
   }
@@ -151,13 +151,16 @@ PQLseq.AI <- function(model0, RelatednessMatrix, tau = c(1,1,0), fixtau = c(1,0,
     
     Y <- eta + (y - mu)/mu.eta
     diff_alpha_tau = 2*c(abs(alpha - alpha0)/(abs(alpha) + abs(alpha0) + tol), abs(tau - tau0)/(abs(tau) + abs(tau0) + tol))
-    if(verbose) cat('diff_alpha_tau:', diff_alpha_tau, '\n')
+    maxdiff <- max(diff_alpha_tau)
     if(verbose) cat('tol:', tol, '\n')
+    if(verbose) cat('maxdiff:', maxdiff, '\n')
+    if(verbose) cat('diff_alpha_tau:', diff_alpha_tau, '\n')
     if(verbose) cat('(diff(alpha), diff(tau))<tol:', 1*(diff_alpha_tau<tol), '\n')
-    if(verbose) cat('Time (s):', Sys.time()-tic, '\n')
-    converged = FALSE
-    if(max(diff_alpha_tau)<tol) {
-      converged = TRUE
+    if(verbose) cat('Time:', as.numeric(difftime(Sys.time(), tic, units = "secs")), 'secs\n')
+    
+    converged <- FALSE
+    if(maxdiff<tol) {
+      converged <- TRUE
       break
     }
     if(max(abs(alpha), tau) > tol^(-2)|any(is.infinite(D))|any(is.infinite(mu))|any(is.infinite(eta)) ) {
@@ -167,13 +170,14 @@ PQLseq.AI <- function(model0, RelatednessMatrix, tau = c(1,1,0), fixtau = c(1,0,
   
   res <- y - mu
   P <- model1$P
-  model1$iter=iter
-  model1$mu=mu
-  model1$Y=Y
-  model1$y=y
-  model1$res=res
-  model1$converged=converged
-  model1$X=X
+  model1$maxdiff <- maxdiff
+  model1$iter <- iter
+  model1$mu <- mu
+  model1$Y <- Y
+  model1$y <- y
+  model1$res <- res
+  model1$converged <- converged
+  model1$X <- X
   
   model1$intercept   <- model1$alpha[1]
   model1$se_intercept<- sqrt(diag(model1$cov)[1] )
