@@ -169,15 +169,9 @@ PQLseq.AI <- function(model0, RelatednessMatrix, tau = c(1,1,0), fixtau = c(1,0,
   }
   
   res <- y - mu
+
   P <- model1$P
-  model1$maxdiff <- maxdiff
-  model1$iter <- iter
-  model1$mu <- mu
-  model1$Y <- Y
-  model1$y <- y
-  model1$res <- res
-  model1$converged <- converged
-  model1$X <- X
+  
   
   model1$intercept   <- model1$alpha[1]
   model1$se_intercept<- sqrt(diag(model1$cov)[1] )
@@ -192,6 +186,20 @@ PQLseq.AI <- function(model0, RelatednessMatrix, tau = c(1,1,0), fixtau = c(1,0,
   
   model1$sigma2      <- model1$tau1+model1$tau2
   model1$h2          <- model1$tau1/(model1$sigma2)
+  
+  model1$maxdiff <- maxdiff
+  model1$iter <- iter
+  model1$mu <- mu
+  model1$Y <- Y
+  model1$y <- y
+  model1$res <- res
+  model1$converged <- converged
+  model1$X <- X
+  model1$K <- RelatednessMatrix[[1]]
+  model1$V <- model1$sigma2*model1$K
+  model1$D <- D
+  model1$family = family
+  model1$numTotal = model0$numTotal
   return(model1)
 }# end function PQLseq.AI 
 
